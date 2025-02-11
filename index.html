@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predator-Prey Simulation</title>
+    <style>
+        /* General Styling */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Header Styling */
+        header {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        /* Main Layout */
+        main {
+            display: flex;
+            justify-content: space-between;
+            width: 90%;
+            max-width: 1200px;
+        }
+
+        /* Simulation Container */
+        #simulation-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Graphs Container */
+        #graphs-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        /* Controls Container */
+        #controls-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 5px;
+            background-color: #e9ecef;
+            border-radius: 8px;
+        }
+
+        /* Canvas Styling */
+        canvas {
+            border: 1px solid black;
+            margin: 10px;
+        }
+
+        /* Controls Styling */
+        #controls-form {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        #controls-form label {
+            margin-top: 10px;
+        }
+
+        button {
+            margin: 10px 0;
+            padding: 5px 10px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        input {
+            margin-top: 5px;
+            margin-bottom: 10px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Predator-Prey Simulation</h1>
+    </header>
+    <main>
+        <!-- Simulation Canvas -->
+        <div id="simulation-container">
+        </div>
+
+        <!-- Graphs Container -->
+        <div id="graphs-container">
+            <canvas id="populationCanvas" width="500" height="200"></canvas>
+            <canvas id="phaseCanvas" width="350" height="350"></canvas>
+        </div>
+
+        <!-- Controls Container -->
+        <div id="controls-container">
+            <h2>Controls</h2>
+            <div>
+                <label for="gridSize">Grid Size:</label>
+                <input type="number" id="gridSize" min="10" max="1000" step="1" placeholder="e.g., 50">
+
+                <label for="initialPrey">Initial Prey Population:</label>
+                <input type="number" id="initialPrey" min="1" placeholder="e.g., 100">
+
+                <label for="initialPredators">Initial Predator Population:</label>
+                <input type="number" id="initialPredators" min="1" placeholder="e.g., 50">
+
+                <label for="preyBirthRate">Prey Birth Rate:</label>
+                <input type="number" id="preyBirthRate" step="0.001" placeholder="e.g., 0.25">
+
+                <label for="predatorKillRate">Predator Kill Rate:</label>
+                <input type="number" id="predatorKillRate" step="0.001" placeholder="e.g., 0.1">
+
+                <label for="preyNaturalDeathRate">Prey Natural Death Rate:</label>
+                <input type="number" id="preyNaturalDeathRate" step="0.001" placeholder="e.g, 0.1">
+
+                <label for="predatorBirthRate">Predator Birth Rate:</label>
+                <input type="number" id="predatorBirthRate" step="0.001" placeholder="e.g, 0.1">
+
+                <label for="predatorDeathRate">Predator Death Rate</label>
+                <input type="number" id="predatorDeathRate" step="0.001" placeholder="e.g, 0.1">
+
+                <label for="preyMovementRadius">Prey Vision Radius:</label>
+                <input type="number" id="preyMovementRadius" min="1" max="10" step="1" placeholder="e.g., 2">
+
+                <br>
+
+                <label for="predatorMovementRadius">Predator Vision Radius:</label>
+                <input type="number" id="predatorMovementRadius" min="1" max="10" step="1" placeholder="e.g., 3">
+
+                <br>
+
+                <button id="start-button">Start</button>
+                <button id="pause-button">Pause</button>
+                <button id="restart-button">Restart</button>
+            </div>
+        </div>
+    </main>
+    <script src="webglCode.js"></script>
+    <script src="shaders.js"></script>
+    <script src="simulation.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
