@@ -1,5 +1,5 @@
 class Simulation{
-    constructor(size, initial_prey, initial_predators, prey_birth_rate, prey_natural_death_rate, predator_kill_rate, predator_birth_rate, predator_death_rate, prey_movement_radius, predator_movement_radius){
+    constructor(size, initial_prey, initial_predators, prey_birth_rate, prey_natural_death_rate, predator_kill_rate, predator_birth_rate, predator_death_rate, predator_death_multiplier, prey_movement_radius, predator_movement_radius){
         this.size = size
         this.grid = Array.from({length: size}, () => Array(size).fill(0))
         this.prey_birth_rate = prey_birth_rate
@@ -9,6 +9,7 @@ class Simulation{
         this.predator_kill_rate = predator_kill_rate
         this.predator_birth_rate = predator_birth_rate
         this.predator_death_rate = predator_death_rate
+        this.predator_death_multiplier = predator_death_multiplier
         this.prey_movement_radius = prey_movement_radius
         this.predator_movement_radius = predator_movement_radius
         this.populationHistory = [[this.initial_predators, this.initial_prey]]
@@ -23,11 +24,13 @@ class Simulation{
         this.movementIntentionsFS = createShader(this.gl, this.gl.FRAGMENT_SHADER, getMovementIntentionsFS)
         this.checkMovementFS = createShader(this.gl, this.gl.FRAGMENT_SHADER, checkMovementFS)
         this.applyMovementFS = createShader(this.gl, this.gl.FRAGMENT_SHADER, applyMovementFS)
+        this.interactionsFS = createShader(this.gl, this.gl.FRAGMENT_SHADER, interactionsFS)
         
         this.renderProgram = createProgram(this.gl, this.vertexShader, this.renderFragmentShader)
         this.movementIntentionsProgram = createProgram(this.gl, this.vertexShader, this.movementIntentionsFS)
         this.checkMovementProgram = createProgram(this.gl, this.vertexShader, this.checkMovementFS)
         this.applyMovementProgram = createProgram(this.gl, this.vertexShader, this.applyMovementFS)
+        this.interactionsProgram = createProgram(this.gl, this.vertexShader, this.interactionsFS)
 
         this.setupBuffers()
         this.framebuffer = this.gl.createFramebuffer()
@@ -35,6 +38,7 @@ class Simulation{
         this.checkMovementTexture = createTexture(this.gl, Array.from({length: size}, () => Array(size).fill(0)))
         this.applyMovementTexture = createTexture(this.gl, Array.from({length: size}, () => Array(size).fill(0)))
         this.gridTexture = createTexture(this.gl, this.grid)
+        this.gridUpdateTexture = createTexture(this.gl, this.grid)
 
         this.drawGrid()
     }
@@ -116,72 +120,112 @@ class Simulation{
     }
 
     movement(){
-            let gl = this.gl
+        let gl = this.gl
 
-            if (!validateTextureData(this.gridTexture)){
-                return
-            }
-
-            gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer)
-            gl.bindTexture(gl.TEXTURE_2D, this.checkMovementTexture)
-            gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.checkMovementTexture, 0)
-
-            gl.useProgram(this.movementIntentionsProgram)
-
-            gl.activeTexture(gl.TEXTURE0)
-            gl.bindTexture(gl.TEXTURE_2D, this.gridTexture)
-        
-            let u_textureLocation = gl.getUniformLocation(this.movementIntentionsProgram, "u_texture")
-            let resolutionLocation = gl.getUniformLocation(this.movementIntentionsProgram, "u_resolution")
-            let preyRadiusLocation = gl.getUniformLocation(this.movementIntentionsProgram, "preyMovementRadius")
-            let predatorRadiusLocation = gl.getUniformLocation(this.movementIntentionsProgram, "predatorMovementRadius")
-            let timeLocation = gl.getUniformLocation(this.movementIntentionsProgram, "time")
-
-            gl.uniform1i(u_textureLocation, 0)
-            gl.uniform2f(resolutionLocation, this.size, this.size)
-            gl.uniform1f(preyRadiusLocation, this.prey_movement_radius)
-            gl.uniform1f(predatorRadiusLocation, this.predator_movement_radius)
-            gl.uniform1f(timeLocation, this.time)
-
-            gl.drawArrays(gl.TRIANGLES, 0, 6)
-            
-            gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer)
-            gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.applyMovementTexture, 0)
-
-            gl.useProgram(this.checkMovementProgram)
-
-            gl.activeTexture(gl.TEXTURE0)
-            gl.bindTexture(gl.TEXTURE_2D, this.checkMovementTexture)
-
-            u_textureLocation = gl.getUniformLocation(this.checkMovementProgram, "u_texture")
-            resolutionLocation = gl.getUniformLocation(this.checkMovementProgram, "u_resolution")
-            timeLocation = gl.getUniformLocation(this.checkMovementProgram, "time")
-
-            gl.uniform1i(u_textureLocation, 0)
-            gl.uniform2f(resolutionLocation, this.size, this.size)
-            gl.uniform1f(timeLocation, this.time)
-
-            gl.drawArrays(gl.TRIANGLES, 0, 6)
-
-            gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer)
-            gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.gridTexture, 0)
-
-            gl.useProgram(this.applyMovementProgram)
-
-            gl.activeTexture(gl.TEXTURE0)
-            gl.bindTexture(gl.TEXTURE_2D, this.applyMovementTexture)
-
-            u_textureLocation = gl.getUniformLocation(this.applyMovementProgram, "u_texture")
-            resolutionLocation = gl.getUniformLocation(this.applyMovementProgram, "u_resolution")
-
-            gl.uniform1i(u_textureLocation, 0)
-            gl.uniform2f(resolutionLocation, this.size, this.size)
-
-            gl.drawArrays(gl.TRIANGLES, 0, 6)
-
-            gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-            this.drawGrid()
+        if (!validateTextureData(this.gridTexture)){
+            return
         }
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer)
+        gl.bindTexture(gl.TEXTURE_2D, this.checkMovementTexture)
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.checkMovementTexture, 0)
+
+        gl.useProgram(this.movementIntentionsProgram)
+
+        gl.activeTexture(gl.TEXTURE0)
+        gl.bindTexture(gl.TEXTURE_2D, this.gridTexture)
+    
+        let u_textureLocation = gl.getUniformLocation(this.movementIntentionsProgram, "u_texture")
+        let resolutionLocation = gl.getUniformLocation(this.movementIntentionsProgram, "u_resolution")
+        let preyRadiusLocation = gl.getUniformLocation(this.movementIntentionsProgram, "preyMovementRadius")
+        let predatorRadiusLocation = gl.getUniformLocation(this.movementIntentionsProgram, "predatorMovementRadius")
+        let timeLocation = gl.getUniformLocation(this.movementIntentionsProgram, "time")
+
+        gl.uniform1i(u_textureLocation, 0)
+        gl.uniform2f(resolutionLocation, this.size, this.size)
+        gl.uniform1f(preyRadiusLocation, this.prey_movement_radius)
+        gl.uniform1f(predatorRadiusLocation, this.predator_movement_radius)
+        gl.uniform1f(timeLocation, this.time)
+
+        gl.drawArrays(gl.TRIANGLES, 0, 6)
+        
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer)
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.applyMovementTexture, 0)
+
+        gl.useProgram(this.checkMovementProgram)
+
+        gl.activeTexture(gl.TEXTURE0)
+        gl.bindTexture(gl.TEXTURE_2D, this.checkMovementTexture)
+
+        u_textureLocation = gl.getUniformLocation(this.checkMovementProgram, "u_texture")
+        resolutionLocation = gl.getUniformLocation(this.checkMovementProgram, "u_resolution")
+        timeLocation = gl.getUniformLocation(this.checkMovementProgram, "time")
+
+        gl.uniform1i(u_textureLocation, 0)
+        gl.uniform2f(resolutionLocation, this.size, this.size)
+        gl.uniform1f(timeLocation, this.time)
+
+        gl.drawArrays(gl.TRIANGLES, 0, 6)
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer)
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.gridTexture, 0)
+
+        gl.useProgram(this.applyMovementProgram)
+
+        gl.activeTexture(gl.TEXTURE0)
+        gl.bindTexture(gl.TEXTURE_2D, this.applyMovementTexture)
+
+        u_textureLocation = gl.getUniformLocation(this.applyMovementProgram, "u_texture")
+        resolutionLocation = gl.getUniformLocation(this.applyMovementProgram, "u_resolution")
+
+        gl.uniform1i(u_textureLocation, 0)
+        gl.uniform2f(resolutionLocation, this.size, this.size)
+
+        gl.drawArrays(gl.TRIANGLES, 0, 6)
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+        this.drawGrid()
+    }
+    // interactions(){
+    //     let gl = this.gl
+
+    //     if (!validateTextureData(this.gridTexture)){
+    //         return
+    //     }
+
+    //     gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer)
+    //     gl.bindTexture(gl.TEXTURE_2D, this.gridUpdateTexture)
+    //     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.gridUpdateTexture, 0)
+
+    //     gl.useProgram(this.interactionsProgram)
+        
+    //     gl.activeTexture(gl.TEXTURE0)
+    //     gl.bindTexture(gl.TEXTURE_2D, this.gridTexture)
+
+    //     let u_textureLocation = gl.getUniformLocation(this.interactionsProgram, "u_texture")
+    //     let resolutionLocation = gl.getUniformLocation(this.interactionsProgram, "u_resolution")
+    //     let preyBirthRateLocation = gl.getUniformLocation(this.interactionsProgram, "preyBirthRate")
+    //     let predatorKillRateLocation = gl.getUniformLocation(this.interactionsProgram, "predatorKillRate")
+    //     let predatorBirthRateLocation = gl.getUniformLocation(this.interactionsProgram, "predatorBirthRate")
+    //     let predatorDeathRateLocation = gl.getUniformLocation(this.interactionsProgram, "predatorDeathRate")
+    //     let preyNaturalDeathRateLocation = gl.getUniformLocation(this.interactionsProgram, "preyNaturalDeathRate")
+    //     let predatorDeathMultiplierLocation = gl.getUniformLocation(this.interactionsProgram, "predatorDeathMultiplier")
+    //     let timeLocation = gl.getUniformLocation(this.interactionsProgram, "time")
+
+    //     gl.uniform1i(u_textureLocation, 0)
+    //     gl.uniform2f(resolutionLocation, this.size, this.size)
+    //     gl.uniform1f(preyBirthRateLocation, this.prey_birth_rate)
+    //     gl.uniform1f(predatorKillRateLocation, this.predator_kill_rate)
+    //     gl.uniform1f(predatorBirthRateLocation, this.predator_birth_rate)
+    //     gl.uniform1f(predatorDeathRateLocation, this.predator_death_rate)
+    //     gl.uniform1f(preyNaturalDeathRateLocation, this.prey_natural_death_rate)
+    //     gl.uniform1f(predatorDeathMultiplierLocation, this.predator_death_multiplier)
+    //     gl.uniform1f(timeLocation, this.time)
+
+    //     gl.drawArrays(gl.TRIANGLES, 0, 6)
+
+    //     gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+    // }
 
     drawGrid(texture=this.gridTexture){
         let gl = this.gl
@@ -272,11 +316,10 @@ class Simulation{
         if (!this.running){
             return
         }
-        console.log(1000 / (time - this.lastTime))
+        // this.interactions()
         this.movement()
-        // this.drawGrid(this.movementTexture)
+        this.drawGrid()
         this.time = ((this.time + 1) * 1.5) % 1000
-        // requestAnimationFrame((time) => this.updateSimulation(time))
         this.lastTime = time
     }
 
@@ -285,8 +328,8 @@ class Simulation{
             return
         }
         this.running = true
-        this.updateSimulation()
-        this.simulationInterval = setInterval(() => {this.updateSimulation()}, 10)
+        // this.updateSimulation(this.lastTime)
+        this.simulationInterval = setInterval(() => {this.updateSimulation()}, 1000)
     }
 
     pauseSimulation(){

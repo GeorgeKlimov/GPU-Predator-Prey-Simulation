@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let preyRadiusInput = document.getElementById("preyMovementRadius")
     let predatorRadiusInput = document.getElementById("predatorMovementRadius")
 
-    let sim = new Simulation(2000, 1000000, 1000000, 1, 0.05, 1, 1, 0.1, 2, 3)
+    let sim = new Simulation(100, 1000, 1000, 1, 0.05, 1, 1, 0.1, 2, 3)
 
     startButton.addEventListener("click", (e) => {
         sim.startSimulation()

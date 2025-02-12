@@ -50,29 +50,11 @@ function createProgram(gl, vertexShader, fragmentShader){
     }
 }
 
-function renderToTexture(gl, program, sourceTex, destTex, framebuffer){
-    gl.useProgram(program)
-    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer)
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, destTex, 0)
-    if (sourceTex) gl.bindTexture(gl.TEXTURE_2D, sourceTex)
-    gl.bindVertexArray(vao)
-    gl.viewport(0, 0, canvas.width, canvas.height)
-    gl.drawArrays(gl.TRIANGLES, 0, 6)
-}
-
-function renderToScreen(gl, program, sourceTex, vao){
-    gl.useProgram(program);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.bindTexture(gl.TEXTURE_2D, sourceTex);
-    gl.bindVertexArray(vao);
-    gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-}
-
 function createBuffer(gl, data){
     let buffer = gl.createBuffer()
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW)
+    return buffer
 }
 
 function createTexture(gl, grid){

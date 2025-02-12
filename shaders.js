@@ -10,7 +10,7 @@ let vertexShaderSource = `#version 300 es
     `
 
 let renderFragmentShaderSource=`#version 300 es
-    precision lowp float;
+    precision highp float;
 
     uniform sampler2D u_texture;
     in vec2 v_texCoord;
@@ -22,7 +22,7 @@ let renderFragmentShaderSource=`#version 300 es
 `
 
 let getMovementIntentionsFS=`#version 300 es
-    precision lowp float;
+    precision highp float;
 
     uniform sampler2D u_texture;
     uniform vec2 u_resolution;
@@ -43,76 +43,6 @@ let getMovementIntentionsFS=`#version 300 es
         return fract(sin(sn) * c);
     }
 
-    vec2 moore(vec2 pos){
-        float prey_nearby = 0.0;
-        float predators_nearby = 0.0;
-        float radius = 0.0;
-
-        vec2 texelSize = 1.0 / u_resolution;
-        float dx = texelSize.x;
-        float dy = texelSize.y;
-
-        vec4 cell = texture(u_texture, pos);
-
-        if(cell.b == 1.0){
-            radius = preyMovementRadius;
-        }
-        else if(cell.r == 1.0){
-            radius = predatorMovementRadius;
-        }
-
-        for (float i = -radius; i <= radius; i++){
-            for (float j = -radius; j <= radius; j++){
-                vec2 offset = pos - vec2(i * dx, j * dy);
-                if (offset.x < 0.0 || offset.x > 1.0 || offset.y < 0.0 || offset.y > 1.0){
-                    continue;
-                }
-                else{
-                    vec4 neighbor = texture(u_texture, offset);
-                    prey_nearby += neighbor.b;
-                    predators_nearby += neighbor.r;
-                }
-            }
-        }
-        return vec2 (prey_nearby, predators_nearby);
-    }
-
-    vec2 neumann(vec2 pos){
-        float prey_nearby = 0.0;
-        float predators_nearby = 0.0;
-        float radius = 0.0;
-
-        vec2 texelSize = 1.0 / u_resolution;
-        float dx = texelSize.x;
-        float dy = texelSize.y;
-
-        vec4 cell = texture(u_texture, pos);
-
-        if(cell.b == 1.0){
-            radius = preyMovementRadius;
-        }
-        else if(cell.r == 1.0){
-            radius = predatorMovementRadius;
-        }
-        
-        for (float i = -radius; i <= radius; i++){
-            for (float j = -radius; j <= radius; j++){
-                if(abs(i) + abs(j) <= radius){
-                    vec2 offset = pos - vec2(i * dx, j * dy);
-                if (offset.x < 0.0 || offset.x > 1.0 || offset.y < 0.0 || offset.y > 1.0){
-                    continue;
-                }
-                else{
-                    vec4 neighbor = texture(u_texture, offset);
-                    prey_nearby += neighbor.b;
-                    predators_nearby += neighbor.r;
-                }
-                }
-            }
-        }
-        return vec2 (prey_nearby, predators_nearby);
-    }
-
     vec4 quadrantCounts(vec2 pos){
         vec4 counts = vec4 (0.0, 0.0, 0.0, 0.0);
         float radius;
@@ -125,18 +55,20 @@ let getMovementIntentionsFS=`#version 300 es
         vec4 cell = texture(u_texture, pos);
 
         if(cell.b == 1.0){
-            radius = preyMovementRadius * dx;
+            radius = preyMovementRadius;
             stateCount = vec4 (1.0, 0.0, 0.0, 1.0);
         }
         else if(cell.r == 1.0){
-            radius = predatorMovementRadius * dx;
+            radius = predatorMovementRadius;
             stateCount = vec4 (0.0, 0.0, 1.0, 1.0);
         }
         
-        for (float x = pos.x - radius; x <= pos.x + radius; x += dx){
-            for (float y = pos.y - radius; y <= pos.y + radius; y += dy){
-                vec2 offset = vec2(x, y);
-                if (offset.x < 0.0 || offset.x > 1.0 || offset.y < 0.0 || offset.y > 1.0){
+        for (float i = -radius; i <= radius; i++){
+            for (float j = -radius; j <= radius; j++){
+                vec2 offset = pos - vec2(i * dx, j * dy);
+                float x = offset.x;
+                float y = offset.y;
+                if (x< 0.0 || x > 1.0 || y < 0.0 || y > 1.0){
                     continue;
                 }
 
@@ -215,11 +147,9 @@ let getMovementIntentionsFS=`#version 300 es
     }
 
     void main() {
-        // fragColor = vec4(1.0, rand(v_texCoord), 0.0, 1.0);
-        // return;
         vec4 cell = texture(u_texture, v_texCoord);
         vec2 intentions = targetCell(v_texCoord);
-        float entity;
+        float entity = 0.0;
         if (cell.r == 1.0){
             entity = 1.0;
         }
@@ -231,7 +161,7 @@ let getMovementIntentionsFS=`#version 300 es
 `
 
 let checkMovementFS = `#version 300 es
-    precision lowp float;
+    precision highp float;
 
     uniform sampler2D u_texture;
     uniform vec2 u_resolution;
@@ -255,7 +185,7 @@ let checkMovementFS = `#version 300 es
         float dx = texelSize.x;
         float dy = texelSize.y;
 
-        vec4 cell = texture(u_texture, v_texCoord);
+        vec4 cell = texture(u_texture, pos);
         vec2 directions[4] = vec2[4](vec2(-dx, 0.0), vec2(dx, 0.0), vec2(0.0, dy), vec2(0.0, -dy));
         float choice[4] = float[4](0.0, 0.0, 0.0, 0.0);
         float total = 0.0;
@@ -288,11 +218,8 @@ let checkMovementFS = `#version 300 es
     }
 
     void main(){
-        vec2 texelSize = 1.0 / u_resolution;
-        float dx = texelSize.x;
-        float dy = texelSize.y;
-
         vec4 cell = texture(u_texture, v_texCoord);
+
         if (cell.r == 0.0){
             vec2 dir = emptyCell(v_texCoord);
             fragColor = vec4(0.0, dir.x, dir.y, 1.0);
@@ -308,7 +235,7 @@ let checkMovementFS = `#version 300 es
 `
 
 let applyMovementFS = `#version 300 es
-    precision lowp float;
+    precision highp float;
 
     uniform sampler2D u_texture;
     uniform vec2 u_resolution;
@@ -385,5 +312,103 @@ let interactionsFS = `#version 300 es
 
     uniform sampler2D u_texture;
     uniform vec2 u_resolution;
+    uniform float preyBirthRate;
+    uniform float predatorKillRate;
+    uniform float predatorBirthRate;
+    uniform float predatorDeathRate;
+    uniform float preyNaturalDeathRate;
+    uniform float predatorDeathMultiplier;
+    uniform float time;
 
+    in vec2 v_texCoord;
+    out vec4 fragColor;
+
+    float rand(vec2 co){
+        co = vec2(1.0, 1.0) - co;
+        float a = 12.9898;
+        float b = 78.233;
+        float c = 43758.5453;
+        float dt= dot(co.xy ,vec2(a,b));
+        float sn= mod(dt,3.14);
+        return fract(sin(sn) * c);
+    }
+
+    vec2 moore(vec2 pos, float radius){
+        float prey_nearby = 0.0;
+        float predators_nearby = 0.0;
+
+        vec2 texelSize = 1.0 / u_resolution;
+        float dx = texelSize.x;
+        float dy = texelSize.y;
+
+        vec4 cell = texture(u_texture, pos);
+
+        for (float i = -radius; i <= radius; i++){
+            for (float j = -radius; j <= radius; j++){
+                vec2 offset = pos - vec2(i * dx, j * dy);
+                if (offset.x < 0.0 || offset.x > 1.0 || offset.y < 0.0 || offset.y > 1.0){
+                    continue;
+                }
+                else{
+                    vec4 neighbor = texture(u_texture, offset);
+                    prey_nearby += neighbor.b;
+                    predators_nearby += neighbor.r;
+                }
+            }
+        }
+        return vec2 (prey_nearby, predators_nearby);
+    }
+    
+    void main(){
+        fragColor = texture(u_texture, v_texCoord);
+        float prob1 = rand(v_texCoord + vec2(time, time));
+        float prob2 = rand(v_texCoord + vec2(time + 1.0, time + 1.0));
+        float prob3 = rand(v_texCoord + vec2(time + 2.0, time + 2.0));
+        float prob4 = rand(v_texCoord + vec2(time + 3.0, time + 3.0));
+        float prob5 = rand(v_texCoord + vec2(time + 4.0, time + 4.0));
+        float prob6 = rand(v_texCoord + vec2(time + 5.0, time + 5.0));
+        float prob7 = rand(v_texCoord + vec2(time + 6.0, time + 6.0));
+
+        if (fragColor == vec4(0.0, 0.0, 0.0, 1.0)){
+            vec2 counts = moore(v_texCoord, 2.0);
+            if (counts.y == 0.0 && counts.x > 0.0){
+                if (prob1 < tanh(preyBirthRate * counts.x) && prob2 > preyNaturalDeathRate){
+                    fragColor = vec4 (0.0, 0.0, 1.0, 1.0);
+                }
+            }
+        }
+        
+        if (fragColor == vec4(0.0, 0.0, 1.0, 1.0)){
+            vec2 counts = moore(v_texCoord, 2.0);
+            if (counts.y > 0.0){
+                if(prob3 < tanh(predatorKillRate * counts.y)){
+                    if (prob4 < predatorBirthRate){
+                        fragColor = vec4 (1.0, 0.0, 0.0, 1.0);
+                    }
+                    else{
+                        fragColor = vec4(0.0, 0.0, 0.0, 1.0);
+                    }
+                    
+                }
+                else if(prob5 < preyNaturalDeathRate){
+                    fragColor = vec4(0.0, 0.0, 0.0, 1.0);
+                }
+            }
+            else if(prob6 < preyNaturalDeathRate){
+                fragColor = vec4(0.0, 0.0, 0.0, 1.0);
+            }
+        }
+
+        if (fragColor == vec4(1.0, 0.0, 0.0, 1.0)){
+            vec2 counts = moore(v_texCoord, 2.0);
+            
+            if (counts.x > 0.0 && prob7 < predatorDeathRate){
+                fragColor = vec4(0.0, 0.0, 0.0, 1.0);
+            }
+            
+            else if(counts.x == 0.0 && prob7 < predatorDeathRate * predatorDeathMultiplier){
+                fragColor = vec4(0.0, 0.0, 0.0, 1.0);
+            }
+        }   
+    }
 `
