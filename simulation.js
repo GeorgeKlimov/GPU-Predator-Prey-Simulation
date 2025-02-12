@@ -133,7 +133,7 @@ class Simulation{
         gl.useProgram(this.movementIntentionsProgram)
 
         gl.activeTexture(gl.TEXTURE0)
-        gl.bindTexture(gl.TEXTURE_2D, this.gridTexture)
+        gl.bindTexture(gl.TEXTURE_2D, this.gridUpdateTexture)
     
         let u_textureLocation = gl.getUniformLocation(this.movementIntentionsProgram, "u_texture")
         let resolutionLocation = gl.getUniformLocation(this.movementIntentionsProgram, "u_resolution")
@@ -143,8 +143,8 @@ class Simulation{
 
         gl.uniform1i(u_textureLocation, 0)
         gl.uniform2f(resolutionLocation, this.size, this.size)
-        gl.uniform1f(preyRadiusLocation, this.prey_movement_radius)
-        gl.uniform1f(predatorRadiusLocation, this.predator_movement_radius)
+        gl.uniform1i(preyRadiusLocation, this.prey_movement_radius)
+        gl.uniform1i(predatorRadiusLocation, this.predator_movement_radius)
         gl.uniform1f(timeLocation, this.time)
 
         gl.drawArrays(gl.TRIANGLES, 0, 6)
@@ -186,46 +186,47 @@ class Simulation{
         gl.bindFramebuffer(gl.FRAMEBUFFER, null)
         this.drawGrid()
     }
-    // interactions(){
-    //     let gl = this.gl
 
-    //     if (!validateTextureData(this.gridTexture)){
-    //         return
-    //     }
+    interactions(){
+        let gl = this.gl
 
-    //     gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer)
-    //     gl.bindTexture(gl.TEXTURE_2D, this.gridUpdateTexture)
-    //     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.gridUpdateTexture, 0)
+        if (!validateTextureData(this.gridTexture)){
+            return
+        }
 
-    //     gl.useProgram(this.interactionsProgram)
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer)
+        gl.bindTexture(gl.TEXTURE_2D, this.gridUpdateTexture)
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.gridUpdateTexture, 0)
+
+        gl.useProgram(this.interactionsProgram)
         
-    //     gl.activeTexture(gl.TEXTURE0)
-    //     gl.bindTexture(gl.TEXTURE_2D, this.gridTexture)
+        gl.activeTexture(gl.TEXTURE0)
+        gl.bindTexture(gl.TEXTURE_2D, this.gridTexture)
 
-    //     let u_textureLocation = gl.getUniformLocation(this.interactionsProgram, "u_texture")
-    //     let resolutionLocation = gl.getUniformLocation(this.interactionsProgram, "u_resolution")
-    //     let preyBirthRateLocation = gl.getUniformLocation(this.interactionsProgram, "preyBirthRate")
-    //     let predatorKillRateLocation = gl.getUniformLocation(this.interactionsProgram, "predatorKillRate")
-    //     let predatorBirthRateLocation = gl.getUniformLocation(this.interactionsProgram, "predatorBirthRate")
-    //     let predatorDeathRateLocation = gl.getUniformLocation(this.interactionsProgram, "predatorDeathRate")
-    //     let preyNaturalDeathRateLocation = gl.getUniformLocation(this.interactionsProgram, "preyNaturalDeathRate")
-    //     let predatorDeathMultiplierLocation = gl.getUniformLocation(this.interactionsProgram, "predatorDeathMultiplier")
-    //     let timeLocation = gl.getUniformLocation(this.interactionsProgram, "time")
+        let u_textureLocation = gl.getUniformLocation(this.interactionsProgram, "u_texture")
+        let resolutionLocation = gl.getUniformLocation(this.interactionsProgram, "u_resolution")
+        let preyBirthRateLocation = gl.getUniformLocation(this.interactionsProgram, "preyBirthRate")
+        let predatorKillRateLocation = gl.getUniformLocation(this.interactionsProgram, "predatorKillRate")
+        let predatorBirthRateLocation = gl.getUniformLocation(this.interactionsProgram, "predatorBirthRate")
+        let predatorDeathRateLocation = gl.getUniformLocation(this.interactionsProgram, "predatorDeathRate")
+        let preyNaturalDeathRateLocation = gl.getUniformLocation(this.interactionsProgram, "preyNaturalDeathRate")
+        let predatorDeathMultiplierLocation = gl.getUniformLocation(this.interactionsProgram, "predatorDeathMultiplier")
+        let timeLocation = gl.getUniformLocation(this.interactionsProgram, "time")
 
-    //     gl.uniform1i(u_textureLocation, 0)
-    //     gl.uniform2f(resolutionLocation, this.size, this.size)
-    //     gl.uniform1f(preyBirthRateLocation, this.prey_birth_rate)
-    //     gl.uniform1f(predatorKillRateLocation, this.predator_kill_rate)
-    //     gl.uniform1f(predatorBirthRateLocation, this.predator_birth_rate)
-    //     gl.uniform1f(predatorDeathRateLocation, this.predator_death_rate)
-    //     gl.uniform1f(preyNaturalDeathRateLocation, this.prey_natural_death_rate)
-    //     gl.uniform1f(predatorDeathMultiplierLocation, this.predator_death_multiplier)
-    //     gl.uniform1f(timeLocation, this.time)
+        gl.uniform1i(u_textureLocation, 0)
+        gl.uniform2f(resolutionLocation, this.size, this.size)
+        gl.uniform1f(preyBirthRateLocation, this.prey_birth_rate)
+        gl.uniform1f(predatorKillRateLocation, this.predator_kill_rate)
+        gl.uniform1f(predatorBirthRateLocation, this.predator_birth_rate)
+        gl.uniform1f(predatorDeathRateLocation, this.predator_death_rate)
+        gl.uniform1f(preyNaturalDeathRateLocation, this.prey_natural_death_rate)
+        gl.uniform1f(predatorDeathMultiplierLocation, this.predator_death_multiplier)
+        gl.uniform1f(timeLocation, this.time)
 
-    //     gl.drawArrays(gl.TRIANGLES, 0, 6)
+        gl.drawArrays(gl.TRIANGLES, 0, 6)
 
-    //     gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-    // }
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+    }
 
     drawGrid(texture=this.gridTexture){
         let gl = this.gl
@@ -316,7 +317,7 @@ class Simulation{
         if (!this.running){
             return
         }
-        // this.interactions()
+        this.interactions()
         this.movement()
         this.drawGrid()
         this.time = ((this.time + 1) * 1.5) % 1000
@@ -329,7 +330,7 @@ class Simulation{
         }
         this.running = true
         // this.updateSimulation(this.lastTime)
-        this.simulationInterval = setInterval(() => {this.updateSimulation()}, 1000)
+        this.simulationInterval = setInterval(() => {this.updateSimulation()}, 10)
     }
 
     pauseSimulation(){

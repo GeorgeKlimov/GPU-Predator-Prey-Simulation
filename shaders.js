@@ -26,8 +26,8 @@ let getMovementIntentionsFS=`#version 300 es
 
     uniform sampler2D u_texture;
     uniform vec2 u_resolution;
-    uniform float preyMovementRadius;
-    uniform float predatorMovementRadius;
+    uniform int preyMovementRadius;
+    uniform int predatorMovementRadius;
     uniform float time;
 
     in vec2 v_texCoord;
@@ -45,7 +45,7 @@ let getMovementIntentionsFS=`#version 300 es
 
     vec4 quadrantCounts(vec2 pos){
         vec4 counts = vec4 (0.0, 0.0, 0.0, 0.0);
-        float radius;
+        int radius;
         vec4 stateCount;
 
         vec2 texelSize = 1.0 / u_resolution;
@@ -63,12 +63,13 @@ let getMovementIntentionsFS=`#version 300 es
             stateCount = vec4 (0.0, 0.0, 1.0, 1.0);
         }
         
-        for (float i = -radius; i <= radius; i++){
-            for (float j = -radius; j <= radius; j++){
-                vec2 offset = pos - vec2(i * dx, j * dy);
+        for (int i = -radius; i <= radius; i++){
+            for (int j = -radius; j <= radius; j++){
+
+                vec2 offset = pos - vec2(float(i) * dx, float(j) * dy);
                 float x = offset.x;
                 float y = offset.y;
-                if (x< 0.0 || x > 1.0 || y < 0.0 || y > 1.0){
+                if (x < 0.0 || x > 1.0 || y < 0.0 || y > 1.0){
                     continue;
                 }
 
@@ -149,6 +150,7 @@ let getMovementIntentionsFS=`#version 300 es
     void main() {
         vec4 cell = texture(u_texture, v_texCoord);
         vec2 intentions = targetCell(v_texCoord);
+
         float entity = 0.0;
         if (cell.r == 1.0){
             entity = 1.0;
@@ -156,7 +158,7 @@ let getMovementIntentionsFS=`#version 300 es
         else if (cell.b == 1.0){
             entity = 0.5;
         }
-        fragColor = vec4 (entity, intentions.x, intentions.y, 1.0);
+        fragColor = vec4 (entity, intentions, 1.0);
     }
 `
 
@@ -333,7 +335,7 @@ let interactionsFS = `#version 300 es
         return fract(sin(sn) * c);
     }
 
-    vec2 moore(vec2 pos, float radius){
+    vec2 moore(vec2 pos, int radius){
         float prey_nearby = 0.0;
         float predators_nearby = 0.0;
 
@@ -343,9 +345,9 @@ let interactionsFS = `#version 300 es
 
         vec4 cell = texture(u_texture, pos);
 
-        for (float i = -radius; i <= radius; i++){
-            for (float j = -radius; j <= radius; j++){
-                vec2 offset = pos - vec2(i * dx, j * dy);
+        for (int i = -radius; i <= radius; i++){
+            for (int j = -radius; j <= radius; j++){
+                vec2 offset = pos - vec2(float(i) * dx, float(j) * dy);
                 if (offset.x < 0.0 || offset.x > 1.0 || offset.y < 0.0 || offset.y > 1.0){
                     continue;
                 }
@@ -370,7 +372,7 @@ let interactionsFS = `#version 300 es
         float prob7 = rand(v_texCoord + vec2(time + 6.0, time + 6.0));
 
         if (fragColor == vec4(0.0, 0.0, 0.0, 1.0)){
-            vec2 counts = moore(v_texCoord, 2.0);
+            vec2 counts = moore(v_texCoord, 2);
             if (counts.y == 0.0 && counts.x > 0.0){
                 if (prob1 < tanh(preyBirthRate * counts.x) && prob2 > preyNaturalDeathRate){
                     fragColor = vec4 (0.0, 0.0, 1.0, 1.0);
@@ -379,7 +381,7 @@ let interactionsFS = `#version 300 es
         }
         
         if (fragColor == vec4(0.0, 0.0, 1.0, 1.0)){
-            vec2 counts = moore(v_texCoord, 2.0);
+            vec2 counts = moore(v_texCoord, 2);
             if (counts.y > 0.0){
                 if(prob3 < tanh(predatorKillRate * counts.y)){
                     if (prob4 < predatorBirthRate){
@@ -400,7 +402,7 @@ let interactionsFS = `#version 300 es
         }
 
         if (fragColor == vec4(1.0, 0.0, 0.0, 1.0)){
-            vec2 counts = moore(v_texCoord, 2.0);
+            vec2 counts = moore(v_texCoord, 2);
             
             if (counts.x > 0.0 && prob7 < predatorDeathRate){
                 fragColor = vec4(0.0, 0.0, 0.0, 1.0);

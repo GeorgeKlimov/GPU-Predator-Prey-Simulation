@@ -117,36 +117,39 @@
             <h2>Controls</h2>
             <div>
                 <label for="gridSize">Grid Size:</label>
-                <input type="number" id="gridSize" min="10" max="1000" step="1" placeholder="e.g., 50">
+                <input type="number" id="gridSize" min="10" max="1000" step="1" value="100">
 
                 <label for="initialPrey">Initial Prey Population:</label>
-                <input type="number" id="initialPrey" min="1" placeholder="e.g., 100">
+                <input type="number" id="initialPrey" min="1" value="1000">
 
                 <label for="initialPredators">Initial Predator Population:</label>
-                <input type="number" id="initialPredators" min="1" placeholder="e.g., 50">
+                <input type="number" id="initialPredators" min="1" value="1000">
 
                 <label for="preyBirthRate">Prey Birth Rate:</label>
-                <input type="number" id="preyBirthRate" step="0.001" placeholder="e.g., 0.25">
+                <input type="number" id="preyBirthRate" step="0.001" value="1">
 
                 <label for="predatorKillRate">Predator Kill Rate:</label>
-                <input type="number" id="predatorKillRate" step="0.001" placeholder="e.g., 0.1">
+                <input type="number" id="predatorKillRate" step="0.001" value="0.1">
 
                 <label for="preyNaturalDeathRate">Prey Natural Death Rate:</label>
-                <input type="number" id="preyNaturalDeathRate" step="0.001" placeholder="e.g, 0.1">
+                <input type="number" id="preyNaturalDeathRate" step="0.001" value="0.2">
 
                 <label for="predatorBirthRate">Predator Birth Rate:</label>
-                <input type="number" id="predatorBirthRate" step="0.001" placeholder="e.g, 0.1">
+                <input type="number" id="predatorBirthRate" step="0.001" value="1">
 
                 <label for="predatorDeathRate">Predator Death Rate</label>
-                <input type="number" id="predatorDeathRate" step="0.001" placeholder="e.g, 0.1">
+                <input type="number" id="predatorDeathRate" step="0.001" value="0.1">
+
+                <label for="predatorDeathMultiplier">Predator Death Multiplier</label>
+                <input type="number" id="predatorDeathMultiplier" step="0.001" value="5">
 
                 <label for="preyMovementRadius">Prey Vision Radius:</label>
-                <input type="number" id="preyMovementRadius" min="1" max="10" step="1" placeholder="e.g., 2">
+                <input type="number" id="preyMovementRadius" min="1" max="10" step="1" value="2">
 
                 <br>
 
                 <label for="predatorMovementRadius">Predator Vision Radius:</label>
-                <input type="number" id="predatorMovementRadius" min="1" max="10" step="1" placeholder="e.g., 3">
+                <input type="number" id="predatorMovementRadius" min="1" max="10" step="1" value="3">
 
                 <br>
 

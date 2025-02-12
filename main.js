@@ -11,21 +11,12 @@ document.addEventListener("DOMContentLoaded", () => {
     let preyDeathRateInput = document.getElementById("preyNaturalDeathRate")
     let predatorBirthRateInput = document.getElementById("predatorBirthRate")
     let predatorDeathRateInput = document.getElementById("predatorDeathRate")
+    let predatorDeathMultiplierInput = document.getElementById("predatorDeathMultiplier")
     let preyRadiusInput = document.getElementById("preyMovementRadius")
     let predatorRadiusInput = document.getElementById("predatorMovementRadius")
 
-    let sim = new Simulation(100, 1000, 1000, 1, 0.05, 1, 1, 0.1, 2, 3)
-
-    startButton.addEventListener("click", (e) => {
-        sim.startSimulation()
-    })
-
-    pauseButton.addEventListener("click", (e) => {
-        sim.pauseSimulation()
-    })
-
-    restartButton.addEventListener("click", (e) => {
-        let gridSize, initialPrey, initialPredators, preyBirthRate, predatorKillRate, preyDeathRate, predatorBirthRate, predatorDeathRate, preyRadius, predatorRadius
+    function makeSimulation(){
+        let gridSize, initialPrey, initialPredators, preyBirthRate, predatorKillRate, preyDeathRate, predatorBirthRate, predatorDeathRate, preyRadius, predatorRadius, predatorDeathMultiplier
         if(gridSizeInput.value){gridSize = parseInt(gridSizeInput.value)}else{gridSize = sim.size}
         if(preyInput.value){initialPrey = parseInt(preyInput.value)}else{initialPrey = sim.initial_prey}
         if(predatorInput.value){initialPredators = parseInt(predatorInput.value)}else{initialPredators = sim.initial_predators}
@@ -36,10 +27,25 @@ document.addEventListener("DOMContentLoaded", () => {
         if(predatorDeathRateInput.value){predatorDeathRate = parseFloat(predatorDeathRateInput.value)}else{predatorDeathRate = sim.predator_death_rate}
         if(preyRadiusInput.value){preyRadius = parseInt(preyRadiusInput.value)}else{preyRadius = sim.prey_movement_radius}
         if(predatorRadiusInput.value){predatorRadius = parseInt(predatorRadiusInput.value)}else{predatorRadius = sim.predator_movement_radius}
-        sim.pauseSimulation()
+        if(predatorDeathMultiplierInput.value){predatorDeathMultiplier = parseInt(predatorDeathMultiplierInput.value)}else{predatorDeathMultiplier = sim.predator_death_multiplier}
 
+        return new Simulation(gridSize, initialPrey, initialPredators, preyBirthRate, predatorKillRate, preyDeathRate, predatorBirthRate, predatorDeathRate, predatorDeathMultiplier, preyRadius, predatorRadius)
+    }
+
+    let sim = makeSimulation()
+
+    startButton.addEventListener("click", (e) => {
+        sim.startSimulation()
+    })
+
+    pauseButton.addEventListener("click", (e) => {
+        sim.pauseSimulation()
+    })
+
+    restartButton.addEventListener("click", (e) => {
+        sim.pauseSimulation()
         time = sim.time
-        sim = new Simulation(gridSize, initialPrey, initialPredators, preyBirthRate, predatorKillRate, preyDeathRate, predatorBirthRate, predatorDeathRate, preyRadius, predatorRadius)
+        sim = makeSimulation()
         sim.time = time
         sim.startSimulation()
     })
