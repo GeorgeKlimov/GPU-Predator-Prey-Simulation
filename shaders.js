@@ -335,9 +335,9 @@ let interactionsFS = `#version 300 es
         return fract(sin(sn) * c);
     }
 
-    vec2 moore(vec2 pos, int radius){
-        float prey_nearby = 0.0;
-        float predators_nearby = 0.0;
+    ivec2 moore(vec2 pos, int radius){
+        int prey_nearby = 0;
+        int predators_nearby = 0;
 
         vec2 texelSize = 1.0 / u_resolution;
         float dx = texelSize.x;
@@ -353,12 +353,12 @@ let interactionsFS = `#version 300 es
                 }
                 else{
                     vec4 neighbor = texture(u_texture, offset);
-                    prey_nearby += neighbor.b;
-                    predators_nearby += neighbor.r;
+                    prey_nearby += int(neighbor.b);
+                    predators_nearby += int(neighbor.r);
                 }
             }
         }
-        return vec2 (prey_nearby, predators_nearby);
+        return ivec2 (prey_nearby, predators_nearby);
     }
     
     void main(){
@@ -372,18 +372,18 @@ let interactionsFS = `#version 300 es
         float prob7 = rand(v_texCoord + vec2(time + 6.0, time + 6.0));
 
         if (fragColor == vec4(0.0, 0.0, 0.0, 1.0)){
-            vec2 counts = moore(v_texCoord, 2);
-            if (counts.y == 0.0 && counts.x > 0.0){
-                if (prob1 < tanh(preyBirthRate * counts.x) && prob2 > preyNaturalDeathRate){
+            ivec2 counts = moore(v_texCoord, 2);
+            if (counts.y == 0 && counts.x > 0){
+                if (prob1 < tanh(preyBirthRate * float(counts.x)) && prob2 > preyNaturalDeathRate){
                     fragColor = vec4 (0.0, 0.0, 1.0, 1.0);
                 }
             }
         }
         
         if (fragColor == vec4(0.0, 0.0, 1.0, 1.0)){
-            vec2 counts = moore(v_texCoord, 2);
-            if (counts.y > 0.0){
-                if(prob3 < tanh(predatorKillRate * counts.y)){
+            ivec2 counts = moore(v_texCoord, 2);
+            if (counts.y > 0){
+                if(prob3 < tanh(predatorKillRate * float(counts.y))){
                     if (prob4 < predatorBirthRate){
                         fragColor = vec4 (1.0, 0.0, 0.0, 1.0);
                     }
@@ -402,13 +402,13 @@ let interactionsFS = `#version 300 es
         }
 
         if (fragColor == vec4(1.0, 0.0, 0.0, 1.0)){
-            vec2 counts = moore(v_texCoord, 2);
+            ivec2 counts = moore(v_texCoord, 2);
             
-            if (counts.x > 0.0 && prob7 < predatorDeathRate){
+            if (counts.x > 0 && prob7 < predatorDeathRate){
                 fragColor = vec4(0.0, 0.0, 0.0, 1.0);
             }
             
-            else if(counts.x == 0.0 && prob7 < predatorDeathRate * predatorDeathMultiplier){
+            else if(counts.x == 0 && prob7 < predatorDeathRate * predatorDeathMultiplier){
                 fragColor = vec4(0.0, 0.0, 0.0, 1.0);
             }
         }   

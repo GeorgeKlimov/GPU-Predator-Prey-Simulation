@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if(predatorRadiusInput.value){predatorRadius = parseInt(predatorRadiusInput.value)}else{predatorRadius = sim.predator_movement_radius}
         if(predatorDeathMultiplierInput.value){predatorDeathMultiplier = parseInt(predatorDeathMultiplierInput.value)}else{predatorDeathMultiplier = sim.predator_death_multiplier}
 
-        return new Simulation(gridSize, initialPrey, initialPredators, preyBirthRate, predatorKillRate, preyDeathRate, predatorBirthRate, predatorDeathRate, predatorDeathMultiplier, preyRadius, predatorRadius)
+        return new Simulation(gridSize, initialPrey, initialPredators, preyBirthRate, preyDeathRate, predatorKillRate, predatorBirthRate, predatorDeathRate, predatorDeathMultiplier, preyRadius, predatorRadius)
     }
 
     let sim = makeSimulation()
