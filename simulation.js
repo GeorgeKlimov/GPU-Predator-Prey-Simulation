@@ -312,6 +312,34 @@ class Simulation{
         ctx.stroke()
     }
 
+    updatePopulationHistory(){
+        let gl = this.gl
+        const width = gl.drawingBufferWidth;
+        const height = gl.drawingBufferHeight;
+        const pixels = new Uint8Array(width * height * 4);
+          
+        gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+          
+        let redPixels = 0;
+        let bluePixels = 0;
+        
+        for (let i = 0; i < pixels.length; i += 4) {
+            const r = pixels[i];
+            const g = pixels[i + 1];
+            const b = pixels[i + 2];
+            const a = pixels[i + 3];
+        
+            if (r > 200 && g < 50 && b < 50 && a > 128) {
+            redPixels++;
+            }
+            else if (b > 200 && r < 50 && g < 50 && a > 128) {
+            bluePixels++;
+            }
+        }   
+        
+        this.populationHistory.push([redPixels, bluePixels])
+    }
+
     lastTime = 0
     updateSimulation(time){
         if (!this.running){
@@ -320,8 +348,15 @@ class Simulation{
         this.interactions()
         this.movement()
         this.drawGrid()
+
         this.time = ((this.time + 1) * 1.5) % 1000
         this.lastTime = time
+
+        this.updatePopulationHistory()
+        this.drawPopulationGraph()
+        this.drawPopulationPhase()
+
+        console.log(this.populationHistory[this.populationHistory.length-1])
     }
 
     startSimulation(){
